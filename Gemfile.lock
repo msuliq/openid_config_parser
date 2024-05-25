@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    openid_config_parser (0.1.0)
+    openid_config_parser (0.1.2)
 
 GEM
   remote: https://rubygems.org/
@@ -66,4 +66,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-   2.5.1
+   2.2.33
