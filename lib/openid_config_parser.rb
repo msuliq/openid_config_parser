@@ -4,6 +4,7 @@ require_relative "openid_config_parser/version"
 require "net/http"
 require "json"
 require "uri"
+require "retryable"
 
 # OpenidConfigParser is a module that fetches and parses OpenID Connect
 # configuration data from a specified endpoint URL and returns a Hash object.
@@ -24,11 +25,29 @@ module OpenidConfigParser
       result
     end
 
+    def fetch_user_info(access_token)
+      Retryable.retryable(tries: 3, on: [Net::ReadTimeout, Net::OpenTimeout]) do
+        response = HTTParty.get(ENV["CLOUDFLARE_USERINFO_ENDPOINT"], {
+                                  headers: {
+                                    "Authorization" => "Bearer #{access_token}",
+                                    "Content-Type" => "application/json"
+                                  },
+                                  timeout: 10
+                                })
+        return response.parsed_response
+      end
+    rescue Net::ReadTimeout, Net::OpenTimeout => e
+      puts "Timeout error: #{e.message}"
+      nil
+    end
+
     def fetch_openid_configuration(endpoint_url)
       uri = URI(endpoint_url)
-      response = Net::HTTP.get(uri)
-      config = JSON.parse(response)
-      deep_symbolize_keys(config)
+      Retryable.retryable(tries: 3, on: [Net::ReadTimeout, Net::OpenTimeout]) do
+        response = Net::HTTP.get(uri)
+        config = JSON.parse(response)
+        return deep_symbolize_keys(config)
+      end
     rescue JSON::ParserError => e
       raise Error, "Failed to parse JSON response: #{e.message}"
     rescue URI::InvalidURIError => e
