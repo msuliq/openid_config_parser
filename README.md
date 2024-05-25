@@ -1,34 +1,61 @@
 # OpenidConfigParser
 
-TODO: Delete this and the text below, and describe your gem
-
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/openid_config_parser`. To experiment with that code, run `bin/console` for an interactive prompt.
+`openid_config_parser` is a lightweight Rubygem containing a method that fetches and
+parses OpenID Connect configuration data from a specified endpoint URL and returns a Hash
+object. It includes error handling to manage various issues that might occur during the
+HTTP request and JSON parsing process.
 
 ## Installation
 
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
+To install the gem run the following command in the terminal:
 
-Install the gem and add to the application's Gemfile by executing:
-
-    $ bundle add UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+    $ bundle add openid_config_parser
 
 If bundler is not being used to manage dependencies, install the gem by executing:
 
-    $ gem install UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+    $ gem install openid_config_parser
 
 ## Usage
 
-TODO: Write usage instructions here
+For non-Rails application you might need to require the gem in your file like so:
 
-## Development
+```ruby
+require 'openid_config_parser'
+```
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+You can use the `openid_config_parser` in any of your Rails controllers, models, or
+other parts of your application.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+```ruby
+# app/controllers/application_controller.rb
+
+class ApplicationController < ActionController::Base
+  def fetch_openid_config
+    endpoint = "https://example.com/.well-known/openid-configuration"
+    config = OpenidConfigParser.fetch_openid_configuration(endpoint)
+
+    if config
+      issuer = config[:issuer]
+      auth_endpoint = config[:authorization_endpoint]
+      token_endpoint = config[:token_endpoint]
+      jwks_uri = config[:]
+      userinfo_endpoint = config[:userinfo_endpoint]
+      # and so on
+    else
+      Rails.logger.error "Failed to fetch OpenID configuration"
+    end
+  rescue OpenidConfigParser::Error => e
+    Rails.logger.error "Error fetching OpenID configuration: #{e.message}"
+  end
+end
+```
+
+Considering that HTTP request is made to fetch the endpoint configuration, you can call
+this method in a background job for optimized performance.
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/openid_config_parser. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/[USERNAME]/openid_config_parser/blob/main/CODE_OF_CONDUCT.md).
+Bug reports and pull requests are welcome on GitHub at https://github.com/msuliq/openid_config_parser. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/msuliq/openid_config_parser/blob/main/CODE_OF_CONDUCT.md).
 
 ## License
 
@@ -36,4 +63,4 @@ The gem is available as open source under the terms of the [MIT License](https:/
 
 ## Code of Conduct
 
-Everyone interacting in the OpenidConfigParser project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/openid_config_parser/blob/main/CODE_OF_CONDUCT.md).
+Everyone interacting in the OpenidConfigParser project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/msuliq/openid_config_parser/blob/main/CODE_OF_CONDUCT.md).
