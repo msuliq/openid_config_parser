@@ -5,6 +5,7 @@ require "net/http"
 require "json"
 require "uri"
 require "retryable"
+require "ostruct"
 
 # OpenidConfigParser is a module that fetches and parses OpenID Connect
 # configuration data from a specified endpoint URL and returns a Hash object.
@@ -12,6 +13,28 @@ require "retryable"
 # during the HTTP request and JSON parsing process.
 module OpenidConfigParser
   class Error < StandardError; end
+
+  # Config is a class that extends OpenStruct to provide a flexible object
+  # for accessing OpenID Connect configuration data. It allows access to
+  # configuration values both as methods (e.g., config.issuer) and as hash
+  # keys (e.g., config[:issuer]).
+  #
+  # Example usage:
+  #   config = OpenidConfigParser.fetch_openid_configuration(endpoint)
+  #   puts config.issuer        # Method access
+  #   puts config[:issuer]      # Hash-like access
+  #
+  # This class is designed to be used internally by the OpenidConfigParser module
+  # and is not intended to be instantiated directly by users.
+  class Config < OpenStruct
+    def [](key)
+      send(key)
+    end
+
+    def []=(key, value)
+      send("#{key}=", value)
+    end
+  end
 
   class << self
     # Recursively converts keys of a hash to symbols while retaining the original string keys.
@@ -42,11 +65,11 @@ module OpenidConfigParser
     end
 
     def fetch_openid_configuration(endpoint_url)
-      uri = URI(endpoint_url)
       Retryable.retryable(tries: 3, on: [Net::ReadTimeout, Net::OpenTimeout]) do
-        response = Net::HTTP.get(uri)
+        response = Net::HTTP.get(URI(endpoint_url))
         config = JSON.parse(response)
-        return deep_symbolize_keys(config)
+        symbolized_config = deep_symbolize_keys(config)
+        return Config.new(symbolized_config)
       end
     rescue JSON::ParserError => e
       raise Error, "Failed to parse JSON response: #{e.message}"

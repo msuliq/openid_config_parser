@@ -35,11 +35,11 @@ class ApplicationController < ActionController::Base
     config = OpenidConfigParser.fetch_openid_configuration(endpoint)
 
     if config
-      issuer = config[:issuer]
-      auth_endpoint = config[:authorization_endpoint]
-      token_endpoint = config[:token_endpoint]
-      jwks_uri = config[:]
-      userinfo_endpoint = config[:userinfo_endpoint]
+      issuer = config.issuer # or config[:issuer]
+      auth_endpoint = config.authorization_endpoint # or config[:authorization_endpoint]
+      token_endpoint = config.token_endpoint # or config[:token_endpoint]
+      jwks_uri = config.jwks_uri # or config[:jwks_uri]
+      userinfo_endpoint = config.userinfo_endpoint # or config[:userinfo_endpoint]
       # and so on
     else
       Rails.logger.error "Failed to fetch OpenID configuration"

@@ -86,4 +86,16 @@ class TestOpenidConfigParser < Minitest::Test
 
     assert_match(/An unexpected error occurred/, error.message)
   end
+
+  def test_config_elements_as_methods
+    stub_request(:get, @valid_endpoint).to_return(body: @valid_response,
+                                                  headers: { "Content-Type" => "application/json" })
+
+    config = OpenidConfigParser.fetch_openid_configuration(@valid_endpoint)
+
+    refute_nil config
+    assert_equal "https://valid.url", config.issuer
+    assert_equal "https://valid.url/authorization", config.authorization_endpoint
+    assert_equal %w[openid email profile groups], config.scopes_supported
+  end
 end
