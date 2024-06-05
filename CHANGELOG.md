@@ -1,5 +1,8 @@
 ## [Released]
 
+## [0.2.1] - 2024-06-05
+- Fix reference to retryable
+
 ## [0.2.0] - 2024-06-04
 - Add retryable, add support to access response values as methods
 
