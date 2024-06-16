@@ -1,5 +1,8 @@
 ## [Released]
 
+## [0.2.3] - 2024-06-16
+- Actions update
+
 ## [0.2.2] - 2024-06-16
 - Add dependabot
 
