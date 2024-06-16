@@ -1,5 +1,8 @@
 ## [Released]
 
+## [0.2.2] - 2024-06-16
+- Add dependabot
+
 ## [0.2.1] - 2024-06-05
 - Fix reference to retryable
 
