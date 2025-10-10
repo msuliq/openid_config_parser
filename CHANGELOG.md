@@ -1,5 +1,8 @@
 ## [Released]
 
+## [0.2.4] - 2025-10-11
+- Dependencies update
+
 ## [0.2.3] - 2024-06-16
 - Actions update
 
