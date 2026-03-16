@@ -4,9 +4,9 @@ source "https://rubygems.org"
 gemspec
 
 group :development, :test do
-  gem "bundle-audit"
+  gem "bundler-audit"
   gem "minitest"
   gem "rake"
-  gem "rubocop"
+  gem "standard"
   gem "webmock"
 end

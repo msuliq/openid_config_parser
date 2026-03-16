@@ -1,9 +1,8 @@
 # OpenidConfigParser
 
-`openid_config_parser` is a lightweight Rubygem containing a method that fetches and
-parses OpenID Connect configuration data from a specified endpoint URL and returns a Hash
-object. It includes error handling to manage various issues that might occur during the
-HTTP request and JSON parsing process.
+`openid_config_parser` is a lightweight, zero-dependency Ruby gem that fetches and parses
+OpenID Connect configuration data from a specified endpoint URL. It includes built-in
+caching, automatic retries, OIDC field validation, and configurable timeouts.
 
 ## Installation
 
@@ -23,35 +22,78 @@ For non-Rails application you might need to require the gem in your file like so
 require 'openid_config_parser'
 ```
 
-You can use the `openid_config_parser` in any of your Rails controllers, models, or
-other parts of your application.
+### Fetching configuration
 
 ```ruby
-# app/controllers/application_controller.rb
+endpoint = "https://example.com/.well-known/openid-configuration"
+config = OpenidConfigParser.fetch_openid_configuration(endpoint)
 
-class ApplicationController < ActionController::Base
-  def fetch_openid_config
-    endpoint = "https://example.com/.well-known/openid-configuration"
-    config = OpenidConfigParser.fetch_openid_configuration(endpoint)
+config.issuer                  # => "https://example.com"
+config[:authorization_endpoint] # => "https://example.com/authorize"
+config["jwks_uri"]             # => "https://example.com/.well-known/jwks.json"
+config.to_h                    # => { issuer: "...", ... }
+```
 
-    if config
-      issuer = config.issuer # or config[:issuer]
-      auth_endpoint = config.authorization_endpoint # or config[:authorization_endpoint]
-      token_endpoint = config.token_endpoint # or config[:token_endpoint]
-      jwks_uri = config.jwks_uri # or config[:jwks_uri]
-      userinfo_endpoint = config.userinfo_endpoint # or config[:userinfo_endpoint]
-      # and so on
-    else
-      Rails.logger.error "Failed to fetch OpenID configuration"
-    end
-  rescue OpenidConfigParser::Error => e
-    Rails.logger.error "Error fetching OpenID configuration: #{e.message}"
-  end
+### Configuration
+
+```ruby
+OpenidConfigParser.configure do |config|
+  config.open_timeout = 10   # seconds (default: 5)
+  config.read_timeout = 10   # seconds (default: 5)
+  config.retries      = 5    # retry attempts on timeout (default: 3)
+  config.cache_ttl    = 3600 # cache lifetime in seconds (default: 900)
+  config.validate     = false # disable OIDC field validation (default: true)
 end
 ```
 
-Considering that HTTP request is made to fetch the endpoint configuration, you can call
-this method in a background job for optimized performance.
+### Fetching user info
+
+Fetch user information from the OIDC `userinfo_endpoint` using an access token.
+Works with any OIDC provider (Cloudflare, Google, Azure AD, etc.).
+
+```ruby
+# With a previously fetched config object
+config = OpenidConfigParser.fetch_openid_configuration(endpoint)
+user_info = OpenidConfigParser.fetch_userinfo(config, access_token: "your_access_token")
+
+user_info[:sub]   # => "user123"
+user_info[:email] # => "user@example.com"
+user_info[:name]  # => "Test User"
+
+# Or pass the discovery endpoint URL directly (config is fetched automatically)
+user_info = OpenidConfigParser.fetch_userinfo(endpoint, access_token: "your_access_token")
+```
+
+### Caching
+
+Responses are cached in memory for the duration of `cache_ttl` (default: 15 minutes).
+Subsequent calls with the same endpoint URL return the cached result without making
+an HTTP request.
+
+```ruby
+OpenidConfigParser.clear_cache! # manually clear all cached configurations
+```
+
+### OIDC validation
+
+By default, the gem validates that the response includes the required fields defined
+in the [OpenID Connect Discovery specification](https://openid.net/specs/openid-connect-discovery-1_0.html):
+`issuer`, `authorization_endpoint`, `jwks_uri`, `response_types_supported`,
+`subject_types_supported`, and `id_token_signing_alg_values_supported`.
+
+Validation can be disabled via configuration if needed.
+
+### Error handling
+
+All errors are wrapped in `OpenidConfigParser::Error`:
+
+```ruby
+begin
+  config = OpenidConfigParser.fetch_openid_configuration(endpoint)
+rescue OpenidConfigParser::Error => e
+  puts e.message
+end
+```
 
 ## Contributing
 
