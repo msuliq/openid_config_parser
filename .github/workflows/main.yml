@@ -12,12 +12,15 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Ruby 2.7
+      - uses: actions/checkout@v6
+      - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 2.7
-      - run: bundle install
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Run tests
+        run: bundle exec rake test
 
       - name: Publish to GPR
         run: |
